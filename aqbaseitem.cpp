@@ -56,12 +56,12 @@ void AQBaseItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
         for (int i = 1;i<handles_.size();i++){
             AQSizeHandelRect *handle_1 = handles_.at(i);
             handle_1->setState(true);
-            AQSizeHandelRect *handle_2 = handles_.at(i-1);
-            painter->drawLine(handle_1->rect().center(),handle_2->rect().center());
+//            AQSizeHandelRect *handle_2 = handles_.at(i-1);
+//            painter->drawLine(handle_1->rect().center(),handle_2->rect().center());
         }
         handles_.at(0)->setState(true);
         rotate_item_->setState(true);
-        painter->drawLine(handles_.at(7)->rect().center(), handles_.at(0)->rect().center());
+//        painter->drawLine(handles_.at(7)->rect().center(), handles_.at(0)->rect().center());
 
         painter->setRenderHint(QPainter::Antialiasing, false);
     }else{
@@ -107,10 +107,11 @@ void AQBaseItem::slt_resize_point(int handle_cnt, QPointF point)
         local_rect_.setTopRight(point);
         break;
     case 3:
-        transformations.translate(-b.topLeft().x(), 0);
-        transformations.scale((point.x() - b.left()) / b.width(), 1.0);
-        transformations.translate(b.topLeft().x(), 0);
+//        transformations.translate(-b.topLeft().x(), 0);
+//        transformations.scale((point.x() - b.left()) / b.width(), 1.0);
+//        transformations.translate(b.topLeft().x(), 0);
         local_rect_.setRight(point.x());
+        qDebug()<<local_rect_;
         break;
     case 4:
         local_rect_.setBottomRight(point);
@@ -186,6 +187,8 @@ void AQBaseItem::updateHandlesPos()
     rotate_item_->setRect(QRectF(b.center().x() - s / 2, b.top() -10, s, s));
     rotate_item_->set_center_point(local_rect_.center());
     setTransformOriginPoint(local_rect_.center());
+    for(int i = 0;i<handles_.size();i++)
+        handles_.at(i)->setTransformOriginPoint(local_rect_.center());
 }
 
 PathItem::PathItem()
