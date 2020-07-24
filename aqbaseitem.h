@@ -16,38 +16,26 @@ const Qt::CursorShape handleCursors[] = {
 };
 
 typedef QVector<AQSizeHandelRect*> Handles;
-class AQBaseItem : public QObject, public QGraphicsPathItem
+class AQBaseItem : public QObject, public QGraphicsPolygonItem
 {
     Q_OBJECT
 public:
     AQBaseItem();
-    QRectF boundingRect() const;
-    QRectF rect() const;
     virtual void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) Q_DECL_OVERRIDE;
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event) Q_DECL_OVERRIDE;
     void hoverMoveEvent(QGraphicsSceneHoverEvent *event) Q_DECL_OVERRIDE;
     void mousePressEvent(QGraphicsSceneMouseEvent *event) Q_DECL_OVERRIDE;
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) Q_DECL_OVERRIDE;
-
-    void set_local_rect(QRectF rect);
-    void set_painter_path(QPainterPath path);
 private slots:
     void slt_update_rotation(qreal angle);
     void slt_resize_point(int handle_cnt, QPointF point);
-private:
-
 protected:
     int handle_cnt_ = -1;
-    QRectF local_rect_;
-private:
     void updateHandlesPos();
-    void update_localrect(QPointF point);
 private:
     Handles handles_;
     int handle_size = 10;
     AQRotateItem *rotate_item_ = Q_NULLPTR;
-
-    QPainterPath painter_path_;
 };
 
 

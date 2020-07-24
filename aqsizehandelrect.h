@@ -11,6 +11,7 @@ class AQSizeHandelRect : public QObject,public QGraphicsRectItem
 public:
     explicit AQSizeHandelRect(QGraphicsItem *parent , int d);
     void setState(bool selected);
+    void fromCircle(const QPointF &center, const int size);
 protected:
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 
@@ -37,6 +38,7 @@ public:
     explicit AQRotateItem(QGraphicsItem * parent = 0);
     void setState(bool selected);
     void set_center_point(QPointF point);
+    void fromCircle(const QPointF &center, const int size);
 protected:
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 
@@ -52,7 +54,7 @@ private:
     double aq_length(QPointF a, QPointF b);
     double aq_direction(QPointF a, QPointF b);
 signals:
-    void sig_update_retation(qreal angle);
+    void sig_update_rotation(qreal angle);
 private:
     bool m_isRotating_ = false;
 
@@ -62,6 +64,8 @@ private:
     QPointF center_point_;
     double current_rotate_ = 0;
     QPointF press_point_;
+
+    const double PI = acos(-1);
 };
 
 #endif // AQSIZEHANDELRECT_H

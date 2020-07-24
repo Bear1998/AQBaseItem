@@ -7,7 +7,7 @@
 
 AQBaseItem::AQBaseItem( )
 {
-    setPos(0,0);
+    setPos(0, 0);
     setFlag(QGraphicsItem::ItemIsMovable, true);
     setFlag(QGraphicsItem::ItemIsSelectable, true);
     setFlag(QGraphicsItem::ItemIsFocusable, true);
@@ -19,21 +19,9 @@ AQBaseItem::AQBaseItem( )
         AQSizeHandelRect *size_handle = new AQSizeHandelRect(this, i);
         handles_.push_back(size_handle);
         connect(size_handle,SIGNAL(sig_resize_point(int,QPointF)),this, SLOT(slt_resize_point(int, QPointF)));
-        connect(rotate_item_, SIGNAL(sig_update_retation(qreal)),size_handle, SLOT(slt_update_rotation(qreal)));
+        connect(rotate_item_, SIGNAL(sig_update_rotation(qreal)),size_handle, SLOT(slt_update_rotation(qreal)));
     }
-    connect(rotate_item_, SIGNAL(sig_update_retation(qreal)),this, SLOT(slt_update_rotation(qreal)));
-}
-
-QRectF AQBaseItem::boundingRect() const
-{
-    qreal size = handle_size / 2;
-    return this->rect().adjusted(-size, -size, size, size);
-
-}
-
-QRectF AQBaseItem::rect() const
-{
-    return local_rect_;
+    connect(rotate_item_, SIGNAL(sig_update_rotation(qreal)),this, SLOT(slt_update_rotation(qreal)));
 }
 
 void AQBaseItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
@@ -42,9 +30,9 @@ void AQBaseItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
     QPen pen;
     pen.setColor(Qt::black);
     painter->setPen(pen);
-    painter->drawPath(this->path());
+    painter->drawPolygon(polygon());
     painter->setPen(QPen(QColor(Qt::red), 1.0, Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin));
-    painter->drawRect(local_rect_);
+    painter->drawPolygon(boundingRect());
 
     if (option->state & QStyle::State_Selected) {
         painter->setRenderHint(QPainter::Antialiasing, true);
@@ -94,58 +82,64 @@ void AQBaseItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 
 void AQBaseItem::slt_resize_point(int handle_cnt, QPointF point)
 {
-    QRectF b = rect();
+    QRectF b = sceneBoundingRect();
+    QPointF p;
+    qreal ratio_x = 1.0;
+    qreal ratio_y = 1.0;
     QTransform transformations;
+
+    // TODO: 边界判断
+    // TODO: 换枚举类型
     switch (handle_cnt) {
     case 0:
-        local_rect_.setTopLeft(point);
+        p = boundingRect().bottomRight();
+        ratio_x = (b.right() - point.x()) / b.width();
+        ratio_y = (b.bottom() - point.y()) / b.height();
         break;
     case 1:
-        local_rect_.setTop(point.y());
+        p = QPointF(boundingRect().center().x(), boundingRect().bottom());
+        ratio_y = (b.bottom() - point.y()) / b.height();
         break;
     case 2:
-        local_rect_.setTopRight(point);
+        p = boundingRect().bottomLeft();
+        ratio_x = (point.x() - b.left()) / b.width();
+        ratio_y = (b.bottom() - point.y()) / b.height();
         break;
     case 3:
-//        transformations.translate(-b.topLeft().x(), 0);
-//        transformations.scale((point.x() - b.left()) / b.width(), 1.0);
-//        transformations.translate(b.topLeft().x(), 0);
-        local_rect_.setRight(point.x());
-        qDebug()<<local_rect_;
+        p = QPointF(boundingRect().left(), boundingRect().center().y());
+        ratio_x = (point.x() - b.left()) / b.width();
         break;
     case 4:
-        local_rect_.setBottomRight(point);
+        p = boundingRect().topLeft();
+        ratio_x = (point.x() - b.left()) / b.width();
+        ratio_y = (point.y() - b.top()) / b.height();
         break;
     case 5:
-        local_rect_.setBottom(point.y());
+        p = QPointF(boundingRect().center().x(), boundingRect().top());
+        ratio_y = (point.y() - b.top()) / b.height();
         break;
     case 6:
-        local_rect_.setBottomLeft(point);
+        p = boundingRect().topRight();
+        ratio_x = (b.right() - point.x()) / b.width();
+        ratio_y = (point.y() - b.top()) / b.height();
         break;
     case 7:
-        local_rect_.setLeft(point.x());
+        p = QPointF(boundingRect().right(), boundingRect().center().y());
+        ratio_x = (point.x() - b.left()) / b.width();
         break;
     default:
         break;
     }
-    this->setTransform(transformations);
+    transformations.translate(p.x(), p.y()).scale(ratio_x, ratio_y).translate(-p.x(), -p.y());
+    setTransform(transformations, true);
 
     updateHandlesPos();
-}
-
-void AQBaseItem::set_local_rect(QRectF rect)
-{
-    local_rect_ = rect;
-    updateHandlesPos();
-}
-
-void AQBaseItem::set_painter_path(QPainterPath path)
-{
-    painter_path_ = path;
+    update();
 }
 
 void AQBaseItem::slt_update_rotation(qreal angle)
 {
+    setTransformOriginPoint(boundingRect().center());
     setRotation(angle);
 }
 
@@ -157,50 +151,44 @@ void AQBaseItem::updateHandlesPos()
         AQSizeHandelRect *handle = handles_.at(i);
         switch (i) {
         case 0:
-            handle->setRect(QRectF(b.left(), b.top(), s, s));
+            handle->fromCircle(b.topLeft(), s);
             break;
         case 1:
-            handle->setRect(QRectF(b.center().x() - s / 2, b.top(), s, s));
+            handle->fromCircle(QPointF(b.center().x(), b.top()), s);
             break;
         case 2:
-            handle->setRect(QRectF(b.right() - s, b.top(), s, s));
+            handle->fromCircle(b.topRight(), s);
             break;
         case 3:
-            handle->setRect(QRectF(b.right() - s, b.center().y() - s / 2, s, s));     
+            handle->fromCircle(QPointF(b.right(), b.center().y()), s);
             break;
         case 4:
-            handle->setRect(QRectF(b.right() - s, b.bottom() - s, s, s));
+            handle->fromCircle(b.bottomRight(), s);
             break;
         case 5:
-            handle->setRect(QRectF(b.center().x() - s / 2, b.bottom() - s, s, s));
+            handle->fromCircle(QPointF(b.center().x(), b.bottom()), s);
             break;
         case 6:
-            handle->setRect(QRectF(b.left(), b.bottom() - s, s, s));
+            handle->fromCircle(b.bottomLeft(), s);
             break;
         case 7:
-            handle->setRect(QRectF(b.left(), b.center().y() - s / 2, s, s));
+            handle->fromCircle(QPointF(b.left(), b.center().y()), s);
             break;
         default:
             break;
         }
     }
-    rotate_item_->setRect(QRectF(b.center().x() - s / 2, b.top() -10, s, s));
-    rotate_item_->set_center_point(local_rect_.center());
-    setTransformOriginPoint(local_rect_.center());
-    for(int i = 0;i<handles_.size();i++)
-        handles_.at(i)->setTransformOriginPoint(local_rect_.center());
+    rotate_item_->fromCircle(QPointF(b.center().x(), b.top()-10), s);
+    rotate_item_->set_center_point(boundingRect().center());
 }
 
 PathItem::PathItem()
 {
-    QPen pen(Qt::yellow, 1, Qt::SolidLine);
-    pen.setBrush(Qt::yellow);
-    QPainterPath path;
-    path.addRect(QRect(100,100, 100, 100));
-    set_local_rect(path.boundingRect());
-//    this->set_painter_path(path);
-    this->setPath(path);
+    QRectF rect(100, 100, 100, 100);
+    QPolygonF polygon(rect);
+    this->setPolygon(polygon);
 
+    updateHandlesPos();
 }
 
 void PathItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)

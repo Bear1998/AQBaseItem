@@ -18,6 +18,11 @@ void AQSizeHandelRect::setState(bool selected)
     }
 }
 
+void AQSizeHandelRect::fromCircle(const QPointF &center, const int size)
+{
+    setRect(QRectF(center.x()-size/2, center.y()-size/2, size, size));
+}
+
 void AQSizeHandelRect::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     painter->save();
@@ -63,7 +68,8 @@ void AQSizeHandelRect::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 {
     if (m_isResizing_) {
         prepareGeometryChange();
-        emit sig_resize_point(dir_, event->pos());
+//        qDebug() << this->mapToScene(event->pos());
+        emit sig_resize_point(dir_, this->mapToScene(event->pos()));
     }else {
         QGraphicsItem::mouseMoveEvent(event);
     }
@@ -118,6 +124,11 @@ void AQRotateItem::set_center_point(QPointF point)
     center_point_ = point;
 }
 
+void AQRotateItem::fromCircle(const QPointF &center, const int size)
+{
+    setRect(QRectF(center.x()-size/2, center.y()-size/2, size, size));
+}
+
 void AQRotateItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     painter->save();
@@ -150,7 +161,7 @@ void AQRotateItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
     if (event->button() == Qt::LeftButton && this->rect().contains(event->pos())) {
         m_isRotating_ = true;
         press_rotate_ = current_rotate_;
-        previous_anglea_ = 360.0;
+        previous_anglea_ = 0.0;
         previous_point_ = press_point_;
     }else{
        QGraphicsItem::mousePressEvent(event);
@@ -194,6 +205,7 @@ void AQRotateItem::item_rotate(QPointF current_point)
     double current_direction = aq_direction(previous_point_, current_point);
     current_rotate_ = press_rotate_ + current_anglea * current_direction;
 
+    // BUG: 多次旋转后误差会放大
     while(current_rotate_ > 360.0)
         current_rotate_ -= 360.0;
     while(current_rotate_ < 0.0)
@@ -202,7 +214,7 @@ void AQRotateItem::item_rotate(QPointF current_point)
     previous_point_ = current_point;
     previous_anglea_ = current_anglea;
 
-    sig_update_retation(current_rotate_);
+    sig_update_rotation(current_rotate_);
 }
 
 double AQRotateItem::aq_anglea(QPointF a, QPointF b, QPointF c)
@@ -213,7 +225,7 @@ double AQRotateItem::aq_anglea(QPointF a, QPointF b, QPointF c)
 
     double cos_a = (ab * ab + ac * ac - bc * bc) / (2 * ab * ac);
 
-    return acos(cos_a) * (180.0 / 3.141592653);
+    return acos(cos_a) * (180.0 / PI);
 }
 
 double AQRotateItem::aq_square(double x)
