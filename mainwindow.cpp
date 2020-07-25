@@ -1,7 +1,9 @@
-﻿#include "mainwindow.h"
-#include "aqbaseitem.h"
-#include <QGraphicsView>
+﻿#include <QGraphicsView>
 #include <QGraphicsScene>
+
+#include "mainwindow.h"
+#include "graphics_obj.h"
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
@@ -11,9 +13,8 @@ MainWindow::MainWindow(QWidget *parent)
     main_view->setScene(main_scene);
     this->setCentralWidget(main_view);
 
-    PathItem *item = new PathItem();
-    main_scene->addItem(item);
-
+    main_scene->addItem(new GraphicsRectItem(QRect(100, 100, 100, 100), false));
+    main_scene->addItem(new GraphicsRectItem(QRect(300, 300, 80, 50), false));
 }
 
 

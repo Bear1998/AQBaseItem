@@ -24,13 +24,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp \
-    aqbaseitem.cpp \
-    aqsizehandelrect.cpp
+    mainwindow.cpp \
+    graphics_obj.cpp \
+    size_handle.cpp
 
 HEADERS  += mainwindow.h \
-    aqbaseitem.h \
-    aqsizehandelrect.h
+    graphics_obj.h \
+    size_handle.h
 
 RESOURCES += \
     rc.qrc
